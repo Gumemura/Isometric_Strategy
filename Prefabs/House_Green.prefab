@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 29415591819279030}
   - component: {fileID: 5731420501824247629}
   m_Layer: 0
-  m_Name: House_Red
+  m_Name: House_Green
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -72,7 +72,7 @@ SpriteRenderer:
   m_SortingLayerID: -1378182533
   m_SortingLayer: 3
   m_SortingOrder: 0
-  m_Sprite: {fileID: -3144487421154535941, guid: 11a63d4b35513bf40b492b8d3715b642,
+  m_Sprite: {fileID: 6622381069016278473, guid: a992a69431b8b514b9a284a3ef64c377,
     type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
