@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class Game_Controller : MonoBehaviour
+public class Game_Controller_Sim : MonoBehaviour
 {
 	//T.O.C.:
 	//CONSTRUCTION
@@ -36,13 +36,14 @@ public class Game_Controller : MonoBehaviour
 
 		bound = tilemapFloor.cellBounds;
 
-		limitLine = transform.gameObject.GetComponent<LineRenderer>();
+		constructLimit = transform.gameObject.GetComponent<LineRenderer>();
 
 		//Getting corners
 		Vector3 gridOrigin = tilemapFloor.GetCellCenterWorld(tilemapFloor.origin);
 		float gridHip = ((tilemapFloor.size.x - 1) * tilemapFloor.cellSize.y);
 		float limitAjustY = tilemapFloor.cellSize.y * (limit - .5f);
 		float limitAjustX = tilemapFloor.cellSize.x * (limit - .5f);
+
 
 		homePlate = gridOrigin + new Vector3(0 , limitAjustY, 0);
 		firstBase = gridOrigin + new Vector3(gridHip, gridHip/2, 0) - new Vector3(limitAjustX, 0, 0);
@@ -59,10 +60,9 @@ public class Game_Controller : MonoBehaviour
 
 	void Line_Inicializator(){
 		//Setting corners 
-		dummyGradient = new Gradient();
 		Vector3[] limitCorners = {homePlate, firstBase, secondBase, thirdBase};
-		limitLine.SetPositions(limitCorners);
-		limitLine.loop = true;
+		constructLimit.SetPositions(limitCorners);
+		constructLimit.loop = true;
 
 		//Creating a "empty" gradient to make line invisible
 		emptyGrad = new Gradient();
@@ -79,8 +79,7 @@ public class Game_Controller : MonoBehaviour
 
 		emptyGrad.SetKeys(colorKey, alphaKey);
 
-		limitLine.colorGradient = emptyGrad;
-		dummyGradient = emptyGrad;
+		constructLimit.colorGradient = emptyGrad;
 	}
 
 	//CONSTRUCTION
@@ -109,11 +108,12 @@ public class Game_Controller : MonoBehaviour
 		private Vector3 thirdBase;
 
 		//Draws a line that represents the limit of the area where it can be build
-		private LineRenderer limitLine;
+		private LineRenderer constructLimit;
 
 		//"Turns off" the line (just set its gradient to zero)
 		private Gradient emptyGrad;
-		private Gradient dummyGradient;
+		private float grad_alpha = 0;
+		private bool turn = true;
 
 		//Called by the construction button on UI
 		public void Create_Blueprint(GameObject building){
@@ -142,111 +142,75 @@ public class Game_Controller : MonoBehaviour
 			return ind > 0;
 		}
 
-		bool CheckIfInGameArea(Vector3 position){
+		bool CheckIfInGameArea(GameObject building){
 			//Check if building position is in game area
-			//Vector3 goPos = position.position;
+			Vector3 goPos = building.transform.position;
 
-			if(!CheckLinearPosition(homePlate, firstBase, position)){
+			if(!CheckLinearPosition(homePlate, firstBase, goPos)){
 				return false;
-			}else if(CheckLinearPosition(firstBase, secondBase, position)){
+			}else if(CheckLinearPosition(firstBase, secondBase, goPos)){
 				return false;
-			}else if(CheckLinearPosition(secondBase, thirdBase, position)){
+			}else if(CheckLinearPosition(secondBase, thirdBase, goPos)){
 				return false;
-			}else if(!CheckLinearPosition(thirdBase, homePlate, position)){
+			}else if(!CheckLinearPosition(thirdBase, homePlate, goPos)){
 				return false;
 			}
 
 			return true;
 		}
 
-		void MoveBlueprint(GameObject blueprint){
-			mouse_to_screen = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-			mouse_to_screen.z = 0;
-
-			Vector3Int grid_coord = tilemapPercolation.WorldToCell(mouse_to_screen);
-			Vector3Int intTo3 = Vector3Int.zero;
-
-			if(grid_coord.x > tilemapPercolation.origin.x + tilemapPercolation.size.x - 1){
-				intTo3.x = tilemapPercolation.origin.x + tilemapPercolation.size.x - 1;
-			}else if(grid_coord.x < tilemapPercolation.origin.x){
-				intTo3.x = tilemapPercolation.origin.x;
-			}else{
-				intTo3.x = grid_coord.x;
-			}
-
-			if(grid_coord.y > tilemapPercolation.origin.y + tilemapPercolation.size.y - 1){
-				intTo3.y = tilemapPercolation.origin.y + tilemapPercolation.size.y - 1;
-			}else if(grid_coord.y < tilemapPercolation.origin.y){
-				intTo3.y = tilemapPercolation.origin.y;
-			}else{
-				intTo3.y = grid_coord.y;
-			}
-
-			blueprint.transform.position = tilemapPercolation.GetCellCenterWorld(intTo3);
-		}
-
 		void Set_Building_Location(GameObject building){
 			//Moves the blueprint along with the mouse
 			//Determine where to place the gameobject and place it
-			MoveBlueprint(blueprint);
 
-			if(!CheckIfInGameArea(mouse_to_screen)){
-				blueprint.transform.GetComponent<SpriteRenderer>().color = Color.red;
-				Tilt_Gradient();
-			}else{
-				blueprint.transform.GetComponent<SpriteRenderer>().color = initial_color;
-				LineFade();
-				if(tilemapPercolation.HasTile(tilemapPercolation.WorldToCell(mouse_to_screen))){
-					blueprint.transform.GetComponent<SpriteRenderer>().color = Color.red; 
-				}else{
-					blueprint.transform.GetComponent<SpriteRenderer>().color = initial_color;
-					if(Input.GetMouseButtonDown(0)){
-						//Here we are forcing the construction to be placed a little bit higher than the mouse coordenates. The purpose of this is to ensure that the
-						//blueprint instace will always be above
-						blueprint.transform.position += new Vector3(0, .0001f, 0);
+			mouse_to_screen = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+			mouse_to_screen.z = 0;
 
-						Instantiate(building, blueprint.transform.position, Quaternion.identity, transform.Find("Construction"));
-						tilemapPercolation.SetTile(tilemapPercolation.WorldToCell(mouse_to_screen), percolation_obstacle_tilebase);
+			Vector3 blueprint_pos = tilemapPercolation.GetCellCenterWorld(tilemapPercolation.LocalToCell(mouse_to_screen));
 
-						if(!Input.GetKey(KeyCode.LeftShift)){
-							Destroy(blueprint);
-							place_blueprint = false;
+			if(tilemapFloor.HasTile(tilemapPercolation.WorldToCell(mouse_to_screen))){
+				//Moving the blueprint
+				blueprint.transform.position = blueprint_pos;
+				constructLimit.colorGradient = emptyGrad;
+
+				if(CheckIfInGameArea(blueprint)){
+					if(tilemapPercolation.HasTile(tilemapPercolation.WorldToCell(mouse_to_screen))){
+						blueprint.transform.GetComponent<SpriteRenderer>().color = Color.red; 
+					}else{
+						blueprint.transform.GetComponent<SpriteRenderer>().color = initial_color;
+						if(Input.GetMouseButtonDown(0)){
+							//Here we are forcing the construction to be placed a little bit higher than the mouse coordenates. The purpose of this is to ensure that the
+							//blueprint instace will always be above
+							blueprint_pos.y += .0001f;
+
+							Instantiate(building, blueprint_pos, Quaternion.identity, transform.Find("Construction"));
+							tilemapPercolation.SetTile(tilemapPercolation.WorldToCell(mouse_to_screen), percolation_obstacle_tilebase);
+
+							if(!Input.GetKey(KeyCode.LeftShift)){
+								Destroy(blueprint);
+								place_blueprint = false;
+							}
 						}
 					}
+				}else{
+					blueprint.transform.GetComponent<SpriteRenderer>().color = Color.red;
+					Tilt_Gradient();
 				}
 			}
 
 			if(Input.GetMouseButtonDown(1)){
+				blueprint.transform.GetComponent<SpriteRenderer>().color = Color.red;
 				Destroy(blueprint);
 				place_blueprint = false;
 			}
 		}
 
-		//Gradulay fades away the limit line
-		void LineFade(){
-			GradientColorKey[] colorKey;
-			GradientAlphaKey[] alphaKey;
-			float lineColorFadeAway = limitLine.colorGradient.alphaKeys[0].alpha;
+		void BlueprintPositionHyp(){
 
-			colorKey = new GradientColorKey[1];
-			alphaKey = new GradientAlphaKey[1];
-
-			if(lineColorFadeAway > 0){
-				lineColorFadeAway -= .1f;
-			}
-			colorKey[0].color = Color.white;
-			colorKey[0].time = 0;
-			alphaKey[0].alpha = lineColorFadeAway;
-			alphaKey[0].time = 0;
-
-			dummyGradient.SetKeys(colorKey, alphaKey);
-			limitLine.colorGradient = dummyGradient;
 		}
 
-		//Makes the limit line blink
-		private float alphaTiltColorLine = 0;
-		private bool turnAlphaTiltColorLine = false;
 		void Tilt_Gradient(){
+			Gradient gradient = new Gradient();
 			GradientColorKey[] colorKey;
 			GradientAlphaKey[] alphaKey;
 
@@ -255,19 +219,20 @@ public class Game_Controller : MonoBehaviour
 
 			colorKey[0].color = Color.white;
 			colorKey[0].time = 0;
-			alphaKey[0].alpha = alphaTiltColorLine;
+			alphaKey[0].alpha = grad_alpha;
 			alphaKey[0].time = 0;
 
-			if(!turnAlphaTiltColorLine){
-				alphaTiltColorLine -= .1f;
-				turnAlphaTiltColorLine = (alphaTiltColorLine < 0);
+			if(!turn){
+				grad_alpha -= .1f;
+				turn = (grad_alpha < 0);
 			}else{
-				alphaTiltColorLine += .1f;
-				turnAlphaTiltColorLine = (alphaTiltColorLine < 3);
+				grad_alpha += .1f;
+				turn = (grad_alpha < 3);
 			}
 
-			dummyGradient.SetKeys(colorKey, alphaKey);
-			limitLine.colorGradient = dummyGradient;
+			gradient.SetKeys(colorKey, alphaKey);
+
+			constructLimit.colorGradient = gradient;
 		}
 
 	//MAP CONSTRUCTOR
@@ -331,8 +296,6 @@ public class Game_Controller : MonoBehaviour
 	void Update(){
 		if (place_blueprint){
 			Set_Building_Location(building_to_be_raised);
-		}else{
-			LineFade();
 		}
 	}
 }
