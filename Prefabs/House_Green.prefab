@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1936285283577085606}
   - component: {fileID: 29415591819279030}
   - component: {fileID: 5731420501824247629}
+  - component: {fileID: 4437321015298069362}
   m_Layer: 0
   m_Name: House_Green
   m_TagString: Untagged
@@ -117,3 +118,16 @@ PolygonCollider2D:
       - {x: 0.570738, y: -0.4005944}
       - {x: 0.570738, y: 0.050332636}
       - {x: 0.29343033, y: 0.29423636}
+--- !u!114 &4437321015298069362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1524836150705410168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d65059d529634864b8c42c66708496ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  size: 1

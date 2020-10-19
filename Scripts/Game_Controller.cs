@@ -144,7 +144,6 @@ public class Game_Controller : MonoBehaviour
 
 		bool CheckIfInGameArea(Vector3 position){
 			//Check if building position is in game area
-			//Vector3 goPos = position.position;
 
 			if(!CheckLinearPosition(homePlate, firstBase, position)){
 				return false;
@@ -329,6 +328,15 @@ public class Game_Controller : MonoBehaviour
 	}	
 
 	void Update(){
+
+			Vector3 a = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+			if(tilemapFloor.WorldToCell(a).x < tilemapFloor.WorldToCell(thirdBase).x){
+				print(tilemapFloor.WorldToCell(a));
+				print("passou do limite");
+			}
+
+
+
 		if (place_blueprint){
 			Set_Building_Location(building_to_be_raised);
 		}else{

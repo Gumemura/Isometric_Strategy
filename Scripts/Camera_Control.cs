@@ -5,7 +5,6 @@ using UnityEngine.Tilemaps;
 public class Camera_Control : MonoBehaviour
 {
 	//Velocity of the camera movemente
-	public float velocity;
 	public Tilemap tilemapFloor;
 
 	public float cameraZoom;
@@ -25,6 +24,8 @@ public class Camera_Control : MonoBehaviour
 	void Start(){
 		CameraMovement_Limits();
 		cam = transform.GetComponent<Camera>();
+		cam.transform.position = tilemapFloor.GetCellCenterWorld(tilemapFloor.origin);
+		cam.transform.position += new Vector3(0, 0, -10);
 	}
 
 	void Update () {
@@ -109,7 +110,7 @@ public class Camera_Control : MonoBehaviour
 			}
 
 			if(count != 2){
-				transform.position += vecZero * velocity * Time.deltaTime;
+				transform.position += vecZero * velocidadesZoom[zoomVelocidadeIndex] * Time.deltaTime;
 			}
 			vecZero = Vector3.zero;
 			count = 0;
@@ -140,8 +141,6 @@ public class Camera_Control : MonoBehaviour
 				cam.orthographicSize += cameraZoom;
 				zoomVelocidadeIndex++;
 			}
-
-			velocity = velocidadesZoom[zoomVelocidadeIndex];
 		}
 	}
 }
